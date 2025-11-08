@@ -1,0 +1,38 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: trading_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: trading_bot
+      POSTGRES_USER: trader
+      POSTGRES_PASSWORD: password123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: trading_backend
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./src:/app/src:delegated
+    environment:
+      DATABASE_URL: postgresql://trader:password123@postgres:5432/trading_bot
+    depends_on:
+      - postgres
+    command: >
+      uvicorn main:app
+      --host 0.0.0.0
+      --port 8000
+      --reload
+
+volumes:
+  postgres_data:
